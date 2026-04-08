@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 
 // ── Change this if your backend runs on a different port ──────
-const API_BASE = "http://localhost:8000";
+const API_BASE = "https://serenity-ai-2.onrender.com";
 const USER_ID = "user_001";
 
 const INSTANT_JOY = [
