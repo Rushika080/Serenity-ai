@@ -360,7 +360,7 @@ function BoxBreathing() {
     };
     ref.current = setTimeout(tick, 1000);
     return () => clearTimeout(ref.current);
-  }, [phases]);
+  }, []);
   function toggle() {
     if (running) {
       clearTimeout(ref.current);
