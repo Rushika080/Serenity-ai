@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { useMemo } from "react";
 
 // ── Change this if your backend runs on a different port ──────
 const API_BASE = "https://serenity-ai-2.onrender.com";
@@ -336,12 +337,12 @@ function BoxBreathing() {
   const [count, setCount] = useState(0);
   const [running, setRunning] = useState(false);
   const ref = useRef(null);
-  const phases = [
-    { label: "Inhale", dur: 4, color: "#6BAE8A" },
-    { label: "Hold", dur: 4, color: "#C8B86A" },
-    { label: "Exhale", dur: 4, color: "#7A9EC2" },
-    { label: "Hold", dur: 4, color: "#8B9E7A" },
-  ];
+  const phases = useMemo(() => [
+  { label: "Inhale", dur: 4, color: "#6BAE8A" },
+  { label: "Hold", dur: 4, color: "#C8B86A" },
+  { label: "Exhale", dur: 4, color: "#7A9EC2" },
+  { label: "Hold", dur: 4, color: "#8B9E7A" },
+], []);
   useEffect(() => {
     if (!running) return;
     let pi = 0,
