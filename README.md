@@ -33,7 +33,33 @@ serenity/
 | Frontend    | React JSX                            | Chat UI, tabs, mood tracker          |
 
 ---
+```mermaid
+flowchart LR
 
+    subgraph Client
+        U[User]
+        F[React Frontend<br/>Vercel]
+    end
+
+    subgraph Server
+        B[FastAPI Backend<br/>Render]
+        NLP[spaCy + TextBlob<br/>NLP Engine]
+        AI[HuggingFace API<br/>LLM]
+        DB[(SQLite DB)]
+    end
+
+    U --> F
+    F -->|REST API| B
+
+    B --> NLP
+    NLP --> B
+
+    B --> AI
+    AI --> B
+
+    B --> DB
+    DB --> B
+```
 ## Backend Setup
 
 ### 1. Create virtual environment
@@ -151,6 +177,5 @@ the AI engine automatically includes this in the AI reply:
 
 ## Production Notes
 - Replace `USER_ID = "user_001"` with a proper auth system (JWT recommended)
-- Add HTTPS + reverse proxy (nginx) before deploying
 - Use PostgreSQL instead of SQLite for multi-user production
 - Rate-limit the /chat endpoint to prevent abuse
