@@ -1,21 +1,21 @@
 # ── Serenity Backend — Python 3.13 Compatible ──────────────────
 
 # Web framework
-fastapi[standard]>=0.115.0
-uvicorn[standard]>=0.29.0
+# fastapi[standard]>=0.115.0
+# uvicorn[standard]>=0.29.0
 
-# AI — OpenAI client pointing at HuggingFace router
-openai>=1.30.0
+# # AI — OpenAI client pointing at HuggingFace router
+# openai>=1.30.0
 
-# NLP
-spacy>=3.8.0,<3.9.0
-textblob>=0.18.0
+# # NLP
+# spacy>=3.8.0,<3.9.0
+# textblob>=0.18.0
 
-# Data validation
-pydantic>=2.7.0
+# # Data validation
+# pydantic>=2.7.0
 
-# Environment variables
-python-dotenv>=1.0.1
+# # Environment variables
+# python-dotenv>=1.0.1
 
 # After installing, run:
 #   python -m spacy download en_core_web_sm
@@ -24,7 +24,7 @@ fastapi==0.115.0
 uvicorn==0.29.0
 
 openai==1.30.0
-
+spacy
 thinc==8.2.1
 blis==0.7.11
 numpy==1.26.4
@@ -33,3 +33,5 @@ textblob==0.18.0
 
 pydantic==2.7.0
 python-dotenv==1.0.1
+PyJWT>=2.8.0
+bcrypt>=4.1.0
