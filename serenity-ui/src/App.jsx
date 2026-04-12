@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useMemo } from "react";
 
-const API_BASE = "https://serenity-ai-2.onrender.com";
+const API_BASE = "https://serenity-ai-1.onrender.com";
 
 // ── Constants ──────────────────────────────────────────────────
 const INSTANT_JOY = [
