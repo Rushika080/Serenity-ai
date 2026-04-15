@@ -230,7 +230,7 @@ Extract mood tag → Save to DB → Return to frontend
 
 ---
 
-## Screenshot
+## Screenshots
 <img width="1909" height="907" alt="Screenshot 2026-04-15 202812" src="https://github.com/user-attachments/assets/e35a4848-9376-4e2e-a2ee-dec34a6336b2" /><img width="1919" height="917" alt="Screenshot 2026-04-15 202910" src="https://github.com/user-attachments/assets/e2f0b516-857e-4485-94b7-6767d59af510" /><img width="1919" height="908" alt="Screenshot 2026-04-15 202956" src="https://github.com/user-attachments/assets/aa82f5e5-23cc-4e4d-b4eb-5d257f01dccc" /><img width="1912" height="888" alt="Screenshot 2026-04-15 203031" src="https://github.com/user-attachments/assets/6303008a-5bbe-42dd-8042-45474a765093" />
 
 ---
