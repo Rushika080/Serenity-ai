@@ -12,7 +12,7 @@ from collections import Counter
 from openai import OpenAI
 from nlp_engine import get_primary_emotion
 
-MODEL = "openai/gpt-oss-120b:groq"
+MODEL = "openai/gpt-oss-120b"
 # ── Core personality ───────────────────────────────────────────
 PERSONALITY = """You are Serenity — a calm, emotionally intelligent AI companion with a warm and slightly poetic voice.
 
