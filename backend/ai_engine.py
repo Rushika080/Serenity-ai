@@ -12,8 +12,7 @@ from collections import Counter
 from openai import OpenAI
 from nlp_engine import get_primary_emotion
 
-MODEL = "Qwen/Qwen2.5-7B-Instruct"
-
+MODEL = "openai/gpt-oss-120b:groq"
 # ── Core personality ───────────────────────────────────────────
 PERSONALITY = """You are Serenity — a calm, emotionally intelligent AI companion with a warm and slightly poetic voice.
 
