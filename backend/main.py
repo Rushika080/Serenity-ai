@@ -1,10 +1,10 @@
-# ── Load .env FIRST ────────────────────────────────────────────
+# ── Load .env FIRST — before any import that reads env vars ───
 from dotenv import load_dotenv
 load_dotenv()
 
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel          # removed unused EmailStr import
 from typing import Optional
 import asyncio
 import uuid
@@ -18,7 +18,7 @@ from database import (
     create_user, get_user_by_username, get_user_by_email,
     save_message, get_history,
     save_mood, get_moods,
-    save_memory, get_memories, clear_memories
+    save_memory, get_memories, clear_memories,
 )
 
 app = FastAPI(title="Serenity Mental Health API", version="3.0.0")
@@ -41,7 +41,7 @@ class RegisterRequest(BaseModel):
     password: str
 
 class LoginRequest(BaseModel):
-    username: str       # accepts username OR email
+    username: str
     password: str
 
 class ChatRequest(BaseModel):
@@ -55,18 +55,15 @@ class ClearRequest(BaseModel):
     pass
 
 
-# ── Auth routes (public) ───────────────────────────────────────
+# ── Auth (public) ──────────────────────────────────────────────
 @app.post("/auth/register")
 def register(req: RegisterRequest):
-    # Validate
     if len(req.username.strip()) < 3:
         raise HTTPException(400, "Username must be at least 3 characters.")
     if len(req.password) < 6:
         raise HTTPException(400, "Password must be at least 6 characters.")
     if "@" not in req.email:
         raise HTTPException(400, "Invalid email address.")
-
-    # Check duplicates
     if get_user_by_username(req.username):
         raise HTTPException(409, "Username already taken.")
     if get_user_by_email(req.email):
@@ -75,32 +72,19 @@ def register(req: RegisterRequest):
     user_id = str(uuid.uuid4())
     hashed  = hash_password(req.password)
     create_user(user_id, req.username, req.email, hashed)
-
     token = create_token(user_id, req.username.strip().lower())
-    return {
-        "token":    token,
-        "user_id":  user_id,
-        "username": req.username.strip().lower(),
-        "message":  "Account created successfully 🌿"
-    }
+    return {"token": token, "user_id": user_id, "username": req.username.strip().lower(), "message": "Account created successfully 🌿"}
 
 
 @app.post("/auth/login")
 def login(req: LoginRequest):
-    # Try username first, then email
     user = get_user_by_username(req.username) or get_user_by_email(req.username)
     if not user:
         raise HTTPException(401, "No account found with that username or email.")
     if not verify_password(req.password, user["password"]):
         raise HTTPException(401, "Incorrect password.")
-
     token = create_token(user["id"], user["username"])
-    return {
-        "token":    token,
-        "user_id":  user["id"],
-        "username": user["username"],
-        "message":  f"Welcome back, {user['username']} 🌿"
-    }
+    return {"token": token, "user_id": user["id"], "username": user["username"], "message": f"Welcome back, {user['username']} 🌿"}
 
 
 # ── Protected routes ───────────────────────────────────────────
