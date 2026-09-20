@@ -27,7 +27,7 @@ from nlp_engine import get_primary_emotion
 # On Render, environment variables are supplied by Render itself.
 load_dotenv()
 
-MODEL = "openai/gpt-oss-120b"
+MODEL = "openai/gpt-oss-120b:groq"
 HF_BASE_URL = "https://router.huggingface.co/v1"
 
 
@@ -353,11 +353,9 @@ def get_ai_response(
 
     try:
         client = OpenAI(
-            base_url=HF_BASE_URL,
-            api_key=token,
-            timeout=30.0,
-            max_retries=1,
-        )
+    base_url="https://router.huggingface.co/v1",
+    api_key=token,
+)
 
         system_prompt = build_system_prompt(
             nlp_result,
