@@ -1,6 +1,4 @@
-# ── Serenity Backend — Python 3.10+ Compatible ─────────────────
-# Zero C-compilation required
-
+# Serenity Backend — Python 3.10+
 fastapi[standard]>=0.115.0
 uvicorn[standard]>=0.29.0
 openai>=1.30.0
@@ -9,6 +7,3 @@ PyJWT>=2.8.0
 bcrypt>=4.1.0
 pydantic>=2.7.0
 python-dotenv>=1.0.1
-
-# After installing run:
-#   python -m textblob.download_corpora

@@ -1,7 +1,9 @@
 """
-AI Engine — Serenity v3
-Fixed: model name, OpenAI client indentation, token loading
-Model: Qwen/Qwen2.5-7B-Instruct (free, no license gate, works with any HF Read token)
+AI Engine - Serenity v4
+Provider: Groq (free, no credit card, 14400 req/day)
+Model: llama-3.3-70b-versatile
+GET KEY: https://console.groq.com/keys
+Add to backend/.env: GROQ_API_KEY=gsk_xxxxxxxxxxxx
 """
 
 import os
@@ -13,69 +15,73 @@ from nlp_engine import get_primary_emotion
 
 load_dotenv()
 
-# ── Model — confirmed working on HuggingFace router ───────────
-MODEL       = "Qwen/Qwen2.5-7B-Instruct"
-HF_BASE_URL = "https://router.huggingface.co/v1"
+GROQ_BASE_URL = "https://api.groq.com/openai/v1"
+MODEL = "llama-3.3-70b-versatile"
 
-# ── Personality ────────────────────────────────────────────────
-PERSONALITY = """You are Serenity — a calm, emotionally intelligent AI companion with a warm and slightly poetic voice.
+PERSONALITY = """You are Serenity, a calm, emotionally intelligent AI companion with a warm voice.
 
 YOUR PERSONALITY:
-- You speak like a wise, caring friend — not a therapist reading from a script
-- You're gently curious, never preachy or lecture-y
-- You use vivid, human language: metaphors, gentle humour when appropriate, real warmth
-- You validate before you advise — always acknowledge feelings first
-- You're concise but never cold — every reply feels personal
-- You notice patterns and name them: "You've mentioned sleep a few times now..."
+- You speak like a wise, caring friend, not a therapist reading from a script
+- You are gently curious, never preachy or lecture-y
+- You use vivid human language with warmth and occasional gentle humour
+- You validate before you advise, always acknowledge feelings first
+- You are concise but never cold, every reply feels personal
+- You notice patterns and name them: You have mentioned sleep a few times now...
 - You connect dots between past and present naturally
-- You celebrate small wins genuinely: "Getting that internship? That's huge."
+- You celebrate small wins genuinely
 
 WRITING STYLE:
-- Never start with "I understand" or "That sounds difficult" — those are filler
-- Never use bullet lists — write in flowing, warm sentences
+- Never start with I understand or That sounds difficult, those are filler
+- Never use bullet lists in replies, write in flowing warm sentences
 - Ask only ONE question per reply, make it specific
 - Keep replies to 3-5 sentences max unless explaining a technique
-- Use natural phrases: "here's the thing", "honestly", "you know what?"
+- Use natural phrases like: here is the thing, honestly, you know what
 
 NEVER:
-- Say "As an AI..." or mention being an AI
+- Say As an AI or mention being an AI
 - Give robotic bullet-pointed advice
 - Diagnose or recommend medication
-- Be sycophantic ("Great question!")
-- If crisis detected: always include "If you're in crisis, please call or text 988 — available 24/7."
+- Be sycophantic
+- If crisis detected: always include this exact line: If you are in crisis, please call or text 988 (Suicide and Crisis Lifeline), available 24/7.
 
-MOOD TAG — last line only, nothing after it:
+MOOD TAG - last line only, nothing after:
 [mood:anxious] | [mood:sad] | [mood:overwhelmed] | [mood:calm] | [mood:happy] | [mood:neutral] | [mood:angry] | [mood:lonely]"""
 
 
-def analyze_mood_patterns(mood_log: list, history: list) -> dict:
+def analyze_mood_patterns(mood_log, history):
     patterns = {}
     if mood_log:
-        moods  = [m["mood"] for m in mood_log]
+        moods = [m["mood"] for m in mood_log]
         recent = moods[:7]
         if recent:
             dominant = Counter(recent).most_common(1)[0]
-            patterns["dominant_mood"]  = dominant[0]
+            patterns["dominant_mood"] = dominant[0]
             patterns["dominant_count"] = dominant[1]
-            patterns["total_logs"]     = len(moods)
         if len(moods) >= 4:
-            score_map = {"sad":1,"lonely":1,"anxious":2,"overwhelmed":2,"angry":2,"neutral":3,"calm":4,"happy":5,"great":5}
-            half  = len(moods) // 2
-            older = moods[half:]
-            newer = moods[:half]
-            o_avg = sum(score_map.get(m,3) for m in older) / len(older)
-            n_avg = sum(score_map.get(m,3) for m in newer) / len(newer)
-            if   n_avg > o_avg + 0.5: patterns["trend"] = "improving"
-            elif n_avg < o_avg - 0.5: patterns["trend"] = "declining"
-            else:                      patterns["trend"] = "stable"
+            score_map = {
+                "sad": 1, "lonely": 1, "anxious": 2,
+                "overwhelmed": 2, "angry": 2, "neutral": 3,
+                "calm": 4, "happy": 5, "great": 5
+            }
+            half = len(moods) // 2
+            o_avg = sum(score_map.get(m, 3) for m in moods[half:]) / len(moods[half:])
+            n_avg = sum(score_map.get(m, 3) for m in moods[:half]) / len(moods[:half])
+            if n_avg > o_avg + 0.5:
+                patterns["trend"] = "improving"
+            elif n_avg < o_avg - 0.5:
+                patterns["trend"] = "declining"
+            else:
+                patterns["trend"] = "stable"
     if history:
-        all_text = " ".join(m.get("content","") for m in history if m.get("role")=="user").lower()
+        all_text = " ".join(
+            m.get("content", "") for m in history if m.get("role") == "user"
+        ).lower()
         themes = {
-            "work/study":    ["work","job","exam","deadline","boss","college","project","internship"],
-            "sleep":         ["sleep","insomnia","tired","exhausted","can't sleep","wake up"],
-            "anxiety":       ["anxious","anxiety","worry","worried","nervous","panic","stress"],
-            "loneliness":    ["alone","lonely","no one","nobody","isolated","friends"],
-            "relationships": ["friend","family","partner","boyfriend","girlfriend","parents"],
+            "work/study": ["work", "job", "exam", "deadline", "boss", "college", "project", "internship"],
+            "sleep": ["sleep", "insomnia", "tired", "exhausted", "wake up"],
+            "anxiety": ["anxious", "anxiety", "worry", "worried", "nervous", "panic", "stress"],
+            "loneliness": ["alone", "lonely", "no one", "nobody", "isolated"],
+            "relationships": ["friend", "family", "partner", "boyfriend", "girlfriend", "parents"],
         }
         found = [t for t, words in themes.items() if sum(1 for w in words if w in all_text) >= 2]
         if found:
@@ -83,96 +89,113 @@ def analyze_mood_patterns(mood_log: list, history: list) -> dict:
     return patterns
 
 
-def build_system_prompt(nlp_result: dict, memories: list, mood_log: list, history: list) -> str:
+def build_system_prompt(nlp_result, memories, mood_log, history):
     parts = [PERSONALITY]
     patterns = analyze_mood_patterns(mood_log, history)
 
     lines = []
     if "dominant_mood" in patterns and patterns.get("dominant_count", 0) >= 2:
-        lines.append(f"They've logged '{patterns['dominant_mood']}' {patterns['dominant_count']} times recently.")
+        lines.append(
+            "They have logged '{}' {} times recently.".format(
+                patterns["dominant_mood"], patterns["dominant_count"]
+            )
+        )
     if "trend" in patterns:
-        lines.append({"improving":"Their mood has been gradually improving — acknowledge this positively.",
-                      "declining":"Their mood has been declining — be extra gentle and proactive.",
-                      "stable":   "Their mood has been fairly stable lately."}[patterns["trend"]])
+        trend_map = {
+            "improving": "Their mood has been gradually improving, acknowledge this positively.",
+            "declining": "Their mood has been declining, be extra gentle and proactive.",
+            "stable": "Their mood has been fairly stable lately.",
+        }
+        lines.append(trend_map[patterns["trend"]])
     if "recurring_themes" in patterns:
-        lines.append(f"Recurring themes: {', '.join(patterns['recurring_themes'])}. Name this pattern naturally if relevant.")
+        lines.append(
+            "Recurring themes: {}. Name this naturally if relevant.".format(
+                ", ".join(patterns["recurring_themes"])
+            )
+        )
     if lines:
-        parts.append("\n[MOOD PATTERNS YOU'VE NOTICED]\n" + "\n".join(f"  • {l}" for l in lines))
+        parts.append("\n[MOOD PATTERNS]\n" + "\n".join("  - " + l for l in lines))
 
     if memories:
-        mem_lines = "\n".join(f"  • {m['snippet']}" for m in memories[:10])
+        mem_text = "\n".join("  - " + m["snippet"] for m in memories[:10])
         parts.append(
-            f"\n[WHAT YOU REMEMBER ABOUT THIS PERSON]\n{mem_lines}\n\n"
-            "Use this to make replies personal. Reference naturally — weave it in, don't list it.\n"
-            "✅ 'You mentioned the internship earlier — how's that been sitting with you?'\n"
-            "❌ 'Based on my memory of your previous conversations...'"
+            "\n[WHAT YOU REMEMBER ABOUT THIS PERSON]\n"
+            + mem_text
+            + "\n\nWeave these into your replies naturally. Connect past to present. "
+            "Reference them like a friend who remembers, not like a database lookup."
         )
 
-    emotions  = nlp_result.get("emotions", [])
-    sentiment = nlp_result.get("sentiment_label", "neutral")
+    emotions = nlp_result.get("emotions", [])
     if emotions:
-        parts.append(f"\n[RIGHT NOW] Detected emotions: {', '.join(emotions)}. Sentiment: {sentiment}. Let this shape your tone.")
+        parts.append(
+            "\n[RIGHT NOW] Detected emotions: {}. Sentiment: {}. Shape your tone accordingly.".format(
+                ", ".join(emotions), nlp_result.get("sentiment_label", "neutral")
+            )
+        )
     if nlp_result.get("crisis_detected"):
-        parts.append("\n[⚠ CRISIS DETECTED] Lead with warmth. Make them feel heard first. MUST include the 988 line.")
+        parts.append(
+            "\n[CRISIS DETECTED] Lead with warmth. Make them feel heard first. "
+            "You MUST include the 988 crisis line in your reply."
+        )
     if nlp_result.get("activity_triggers"):
-        parts.append(f"\n[TRIGGERS] User mentioned: {', '.join(nlp_result['activity_triggers'])}. Offer one concrete targeted suggestion.")
+        parts.append(
+            "\n[TRIGGERS] User mentioned: {}. Offer one concrete targeted suggestion.".format(
+                ", ".join(nlp_result["activity_triggers"])
+            )
+        )
 
     return "\n".join(parts)
 
 
-def format_history(history: list) -> list:
+def format_history(history):
     return [
-        {"role": "user" if r.get("role") == "user" else "assistant", "content": r.get("content", "")}
-        for r in history if r.get("content")
+        {
+            "role": "user" if r.get("role") == "user" else "assistant",
+            "content": r.get("content", ""),
+        }
+        for r in history
+        if r.get("content")
     ]
 
 
-def extract_mood_tag(text: str) -> tuple[str, str]:
+def extract_mood_tag(text):
     match = re.search(r"\[mood:(\w+)\]", text)
-    mood  = match.group(1) if match else "neutral"
+    mood = match.group(1) if match else "neutral"
     clean = re.sub(r"\[mood:\w+\]", "", text).strip()
     return clean, mood
 
 
-def get_ai_response(
-    user_message: str,
-    history: list,
-    nlp_result: dict,
-    memories: list = None,
-    mood_log: list = None,
-) -> tuple[str, str]:
-    # Re-read token every call so no restart needed after .env change
-    token = os.getenv("HF_TOKEN", "").strip()
+def get_ai_response(user_message, history, nlp_result, memories=None, mood_log=None):
+    token = os.getenv("GROQ_API_KEY", "").strip()
 
-    # Safe debug log (never prints full token)
-    print(f"[HF DEBUG] token_loaded={bool(token)} len={len(token)} prefix={token[:4] if token else 'NONE'}")
+    print("[GROQ] key_loaded={} prefix={}".format(bool(token), token[:7] if token else "NONE"))
 
     if not token:
-        print("[HF ERROR] HF_TOKEN is missing from environment.")
+        print("[GROQ ERROR] GROQ_API_KEY missing.")
         return (
-            "⚙️ HF_TOKEN is missing. Add it to backend/.env:\nHF_TOKEN=hf_your_token_here\n"
-            "Get a free token at huggingface.co/settings/tokens → New token → Read",
-            "neutral"
+            "GROQ_API_KEY is missing from backend/.env\n\n"
+            "Fix:\n"
+            "1. Go to console.groq.com/keys\n"
+            "2. Sign up free, email only, no card needed\n"
+            "3. Create an API key\n"
+            "4. Add to backend/.env: GROQ_API_KEY=gsk_your_key\n"
+            "5. Restart the server",
+            "neutral",
         )
 
-    # ── FIXED: correct indentation for OpenAI client ──────────
     client = OpenAI(
-        base_url=HF_BASE_URL,
+        base_url=GROQ_BASE_URL,
         api_key=token,
     )
 
     system_prompt = build_system_prompt(
-        nlp_result,
-        memories  or [],
-        mood_log  or [],
-        history,
+        nlp_result, memories or [], mood_log or [], history
     )
-
     messages = [{"role": "system", "content": system_prompt}]
     messages += format_history(history[-14:])
     messages.append({"role": "user", "content": user_message})
 
-    print(f"[HF DEBUG] Calling model={MODEL} base_url={HF_BASE_URL}")
+    print("[GROQ] calling model={}".format(MODEL))
 
     try:
         completion = client.chat.completions.create(
@@ -182,27 +205,35 @@ def get_ai_response(
             temperature=0.80,
             top_p=0.92,
         )
-        raw   = completion.choices[0].message.content if completion.choices else None
-        raw   = raw or "I'm here. Tell me more?"
+        raw = completion.choices[0].message.content if completion.choices else None
+        raw = raw or "I am here. Tell me more?"
         clean, mood = extract_mood_tag(raw)
         if mood == "neutral" and nlp_result.get("emotions"):
             mood = get_primary_emotion(nlp_result) or "neutral"
-        print("[HF DEBUG] Request successful.")
+        print("[GROQ] success")
         return clean, mood
 
     except Exception as e:
-        err   = str(e)
+        err = str(e)
         err_l = err.lower()
-        print(f"[HF ERROR] {type(e).__name__}: {err}")
+        print("[GROQ ERROR] {}: {}".format(type(e).__name__, err))
 
-        if "401" in err or "unauthorized" in err_l or "invalid api key" in err_l:
-            return ("🔑 HF token rejected. Get a fresh one at huggingface.co/settings/tokens → New token → Read, then update HF_TOKEN in backend/.env and restart.", "neutral")
-        if "model_not_supported" in err_l or "not supported" in err_l or "provider" in err_l:
-            return ("AI provider temporarily unavailable. Please try again in a moment.", "neutral")
-        if "402" in err or "credit" in err_l:
-            return ("HuggingFace free tier credits used up. Try again tomorrow.", "neutral")
-        if "503" in err or "loading" in err_l:
-            return ("Model is warming up ☕ Please wait 20 seconds and try again.", "neutral")
-        if "timeout" in err_l or "timed out" in err_l:
+        if "401" in err or "invalid api key" in err_l or "authentication" in err_l:
+            return (
+                "Groq API key is invalid. Go to console.groq.com/keys, "
+                "create a new key, update GROQ_API_KEY in backend/.env, "
+                "then restart the server.",
+                "neutral",
+            )
+        if "429" in err or "rate limit" in err_l:
+            return (
+                "Rate limit reached on the free tier. "
+                "Please wait a moment and try again.",
+                "neutral",
+            )
+        if "503" in err or "unavailable" in err_l:
+            return ("Service temporarily unavailable. Please try again shortly.", "neutral")
+        if "timeout" in err_l:
             return ("Request timed out. Please try again.", "neutral")
-        return (f"Connection hiccup — check your terminal for details.", "neutral")
+
+        return ("Connection error. Check your terminal for details.", "neutral")
