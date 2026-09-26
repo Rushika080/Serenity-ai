@@ -16,7 +16,7 @@ from nlp_engine import get_primary_emotion
 load_dotenv()
 
 GROQ_BASE_URL = "https://api.groq.com/openai/v1"
-MODEL = "llama-3.3-70b-versatile"
+MODEL = "openai/gpt-oss-20b"
 
 PERSONALITY = """You are Serenity, a calm, emotionally intelligent AI companion with a warm voice.
 
