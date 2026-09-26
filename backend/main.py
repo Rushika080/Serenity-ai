@@ -1,7 +1,9 @@
 # ── Load .env FIRST — before any import that reads env vars ───
 from dotenv import load_dotenv
 load_dotenv()
-
+import sys
+import io
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel          # removed unused EmailStr import
